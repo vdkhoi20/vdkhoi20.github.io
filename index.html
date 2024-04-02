@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Mutual Self-Attention Control">
+  <meta name="keywords" content="Stable Diffusion">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MasaCtrl: Tuning-free Mutual Self-Attention Control for Consistent
+    Image Synthesis and Editing</title>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script> -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/favicon.svg">
+
+  <script src="./static/js/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+
+<body>
+
+<!-- <nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+  <div class="navbar-menu">
+    <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
+      <a class="navbar-item" href="https://keunhong.com">
+      <span class="icon">
+          <i class="fas fa-home"></i>
+      </span>
+      </a>
+
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link">
+          More Research
+        </a>
+        <div class="navbar-dropdown">
+          <a class="navbar-item" href="https://hypernerf.github.io">
+            HyperNeRF
+          </a>
+          <a class="navbar-item" href="https://nerfies.github.io">
+            Nerfies
+          </a>
+          <a class="navbar-item" href="https://latentfusion.github.io">
+            LatentFusion
+          </a>
+          <a class="navbar-item" href="https://photoshape.github.io">
+            PhotoShape
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav> -->
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-2 publication-title">MasaCtrl: Tuning-free <span style="text-decoration: underline">M</span>utu<span style="text-decoration: underline">a</span>l <span style="text-decoration: underline">S</span>elf-<span style="text-decoration: underline">A</span>ttention <span style="text-decoration: underline">Control</span> for Consistent
+            Image Synthesis and Editing</h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://github.com/ljzycmd">Mingdeng Cao</a><sup>1,2</sup>,</span>
+            <span class="author-block">
+              <a href="https://xinntao.github.io">Xintao Wang</a><sup>2&#9993</sup>,</span>
+            <span class="author-block">
+              <a href="https://scholar.google.com/citations?user=zJvrrusAAAAJ">Zhongang Qi</a><sup>2</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://scholar.google.com/citations?user=4oXBp9UAAAAJ">Ying Shan</a><sup>2</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://scholar.google.com/citations?hl=zh-CN&user=mk-F69UAAAAJ">Xiaohu Qie</a><sup>2</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://scholar.google.com/citations?user=JD-5DKcAAAAJ">Yinqiang Zheng</a><sup>1&#9993</sup>
+            </span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup>1</sup>The University of Tokyo,</span>
+            <span class="author-block"><sup>2</sup>ARC Lab, Tencent PCG</span>
+          </div>
+
+          <div class="column has-text-centered">
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2304.08465"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="https://github.com/TencentARC/MasaCtrl"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Github</span>
+                  </a>
+              </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <img src="./static/assets/teaser.png" alt="teaser" width="100%">
+      <h2 class="subtitle has-text-centered">
+        <span class="masactrl">MasaCtrl</span> enables performing text-based non-rigid image synthesis and real image
+        editing without finetuning. Meanwhile, our method can be easily integrated into controllable diffusion models, like T2I-
+        Adapter, to perform more consistent and faithful synthesis and editing.
+      </h2>
+    </div>
+  </div>
+</section>
+
+
+<section class="hero is-light is-small">
+  <div class="hero-body">
+    <!-- image demo -->
+    <div class="container"> 
+      <h2 class="title is-6", style="text-align: center;"> Consistent Synthesis and Editing Results</h2>
+      <div id="results-carousel" class="carousel results-carousel">
+        <div class="item item-steve">
+          <img src="static/assets/results/dog_sitting_running.png">
+        </div>
+        <div class="item item-chair-tp">
+          <img src="static/assets/results/duck_flying_standing.png">
+        </div>
+        <div class="item item-chair-tp">
+          <img src="static/assets/results/old_man_sideview.png">
+        </div>
+        <div class="item">
+          <img src="static/assets/results/cat_sitting_walking.png">
+        </div>
+        <div class="item item-shiba">
+          <img src="static/assets/results/goose_standing_sitting.png">
+        </div>
+        <div class="item item-fullbody">
+          <img src="static/assets/results/orange_an_two.png">
+        </div>
+        <div class="item item-blueshirt">
+          <img src="static/assets/results/man_from_behind.png">
+        </div>
+        <div class="item item-mask">
+          <img src="static/assets/results/orange_an_two_2.png">
+        </div>
+        <!-- real image editing -->
+        <div class="item item-steve">
+          <img src="static/assets/results/dog_jumping.png">
+        </div>
+        <div class="item item-chair-tp">
+          <img src="static/assets/results/person_giving_thumbs_up.png">
+        </div>
+        <div class="item item-chair-tp">
+          <img src="static/assets/results/dog_running.png">
+        </div>
+        <div class="item">
+          <img src="static/assets/results/person_greeting_hands.png">
+        </div>
+        <div class="item">
+          <img src="static/assets/results/person_clamping_hands.png">
+        </div>
+        <div class="item">
+          <img src="static/assets/results/person_crossed_arms.png">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-body">
+    <!-- video demo -->
+    <div class="container">
+      <h2 class="title is-6", style="text-align: center;"> Synthesis Results with T2I-Adapter </h2>
+      <div id="results-carousel" class="carousel results-carousel">
+        <div class="item item-steve">
+          <video poster="" id="steve" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/batman_7319829.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-chair-tp">
+          <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
+            <source src="static/videos/bear_41506546.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-chair-tp">
+          <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
+            <source src="static/videos/car_moving_canny_48483430.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-chair-tp">
+          <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
+            <source src="static/videos/hulk_58053299.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-chair-tp">
+          <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
+            <source src="static/videos/ironman_11141186.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item">
+          <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
+            <source src="static/videos/batman_68762673.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item">
+          <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
+            <source src="static/videos/bear_396152.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item">
+          <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
+            <source src="static/videos/ironman_13594726.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item">
+          <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
+            <source src="static/videos/jamesbond_33117084.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item">
+          <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
+            <source src="static/videos/obama_32045950.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Despite the success in large-scale text-to-image generation and text-conditioned image editing,
+            existing methods still struggle to produce consistent generation and editing results.
+            For example, generation approaches usually fail to synthesize multiple images of the same objects/character but with different views or poses.
+            Meanwhile, existing editing methods either fail to achieve effective complex non-rigid editing while maintaining the overall textures and identity, 
+            or require time-consuming fine-tuning to capture the image-specific appearance. In this paper, we develop <span style="font-weight: bold;">MasaCtrl</span>, a tuning-free method to achieve consistent image generation and complex non-rigid image editing simultaneously. Specifically, MasaCtrl converts existing self-attention in diffusion models into mutual self-attention, so that it can query correlated local contents and textures from source images for consistency. To further alleviate the query confusion between foreground and background, we propose a masked-guided mutual self-attention strategy, where the mask can be easily extracted from the cross-attention maps. Extensive experiments show that the proposed MasaCtrl can produce impressive results in both consistent image generation and complex non-rigid real image editing.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+  </div>
+</section>
+
+
+<!-- Methods section -->
+<Section>
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Methods</h2>
+      
+      <div class="column is-full-width">
+        
+        <div class="content has-text-justified">
+          <img src="static/assets/arch/main_arch.png">
+          <p>
+            Pipeline of the proposed <span class="masactrl">MasaCtrl</span>. Our method tries to perform complex non-rigid image editing and synthesize content-consistent images. The source image is either real or synthesized with source text prompt Ps.
+            During the denoising process for image synthesis, we convert the self-attention into mutual self-attention to query image contents from source image,
+            so that we can synthesize content-consist images under the modified target prompt P.
+          </p>
+        </div>
+      </div>
+  </div>
+</Section>
+<!-- Methods section -->
+
+
+<!-- Results -->
+<section class="section">
+  <div class="container is-max-desktop">
+  <h2 class="title is-3 has-text-centered"> Results </h2>
+      <!-- Synthetic Results -->
+      <div class="column is-full-width">
+        <h2 class="title is-4">Consistent Synthesis Results</h2>          
+        <img src="static/assets/results_synthetic.png" width="100%">
+        <p>
+          Consistent synthesis results of different methods on the synthetic images. From left to right: the source image text
+          description, generated source image, editing phrase, our results, P2P [2], SDEdit [3], and PnP [4]. 
+        </p>
+      </div>
+      <!--/ Synthetic Results -->
+
+      <!-- Real image editing -->
+      <div class="column is-full-width">
+        <h2 class="title is-4">Real Image Editing Results</h2>
+        <img src="static/assets/results_real.png" width="100%">
+        <p>
+          Real image editing results of different editing methods on real images. 
+          From left to right: the source real image, our results, P2P [2], SDEdit [3], and PnP [4].
+        </p>
+      </div>
+      <!--/ Real image editing. -->
+
+      <!-- Results with Adapter -->
+      <div class="column is-full-width">
+        <h2 class="title is-4">Results with T2I-Adapter</h2>
+        <img src="static/assets/results_w_adapter.png" width="100%">
+        <p>
+          Consistent synthesis results (left part, with sketch guidance) and real image editing results (right part, with canny guidance) with MasaCtrl integrated into T2I-Adapter [1].
+        </p>
+      </div>
+
+      <!--/ Generalize to other models -->
+      <div class="column is-full-width">
+        <h2 class="title is-4">Results on Anything-v4 Model</h2>
+        <img src="static/assets/angthingv4_synthetic.png" width="100%">
+        <p>
+          Consistent synthesis results of MasaCtrl with Anything-V4 checkpoint.
+        </p>
+      </div>
+
+      <!--/ Extension to video synthesis -->
+      <div class="column is-full-width">
+        <h2 class="title is-4">Video Synthesis Results</h2>
+        <img src="static/assets/results_w_adapter_consistent.png" width="100%">
+        <p>
+          With dense consistent guidance, MasaCtrl enables video synthesis without fine-tuning. Please refer to the carousel to see the video synthesis results.
+        </p>
+      </div>
+  </div>
+
+    <!-- Concurrent Work. -->
+    <div class="container is-max-desktop">
+      <div class="column is-full-width">
+        <h2 class="title is-4">Related Links</h2>
+        <p>
+        [1] <a href="https://github.com/TencentARC/T2I-AdapterT2I-Adapter">Learning Adapters to Dig out More Controllable Ability for Text-to-Image Diffusion Models</a>
+        </p>
+        <p>
+        [2] <a href="https://github.com/google/prompt-to-prompt">Prompt-to-Prompt Image Editing with Cross-Attention Control</a>
+        </p>
+        <p>
+        [3] <a href="https://github.com/ermongroup/SDEdit">SDEdit: Guided Image Synthesis and Editing with Stochastic Differential Equations</a>
+        </p>
+        <p>
+        [4] <a href="https://github.com/MichalGeyer/plug-and-play">Plug-and-Play Diffusion Features for Text-Driven Image-to-Image Translation</a>
+        </p>
+      </div>
+    </div>
+
+  </div>
+</section>
+<!-- Results -->
+
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@InProceedings{Cao_2023_ICCV,
+      author    = {Cao, Mingdeng and Wang, Xintao and Qi, Zhongang and Shan, Ying and Qie, Xiaohu and Zheng, Yinqiang},
+      title     = {MasaCtrl: Tuning-Free Mutual Self-Attention Control for Consistent Image Synthesis and Editing},
+      booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
+      month     = {October},
+      year      = {2023},
+      pages     = {22560-22570}
+  }</code></pre>
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <!-- <div class="content has-text-centered">
+      <a class="icon-link"
+         href="./static/videos/nerfies_paper.pdf">
+        <i class="fas fa-file-pdf"></i>
+      </a>
+      <a class="icon-link" href="https://github.com/keunhong" class="external-link" disabled>
+        <i class="fab fa-github"></i>
+      </a>
+    </div> -->
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This website is modified from the <a href="https://nerfies.github.io/">Nerfies</a>, which is licensed under a <a rel="license"
+                                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+          <p>
+            This means you are free to borrow the <a
+              href="https://github.com/nerfies/nerfies.github.io">source code</a> of this website,
+            we just ask that you link back to this page in the footer.
+            Please remember to remove the analytics code included in the header of the website which
+            you do not want on your website.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
